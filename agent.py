@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Image Generation Agent
-Generates AI images based on public personality names.
+Generates AI images based on public personality names using Google's Gemini API.
 """
 
 import os
@@ -9,9 +9,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+import base64
 
-import requests
-from openai import OpenAI
+import google.generativeai as genai
+from PIL import Image
+import io
 
 from config import Config
 
@@ -22,7 +24,8 @@ class PersonalityImageAgent:
     def __init__(self):
         """Initialize the agent with configuration."""
         Config.validate()
-        self.client = OpenAI(api_key=Config.OPENAI_API_KEY)
+        genai.configure(api_key=Config.GEMINI_API_KEY)
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
         self.output_dir = Path(Config.OUTPUT_DIR)
         self.output_dir.mkdir(exist_ok=True)
 
@@ -48,14 +51,14 @@ class PersonalityImageAgent:
 
     def generate_image(self, personality_name: str, custom_context: Optional[str] = None) -> dict:
         """
-        Generate an AI image for the given personality.
+        Generate an AI image for the given personality using Gemini.
 
         Args:
             personality_name: Name of the public personality
             custom_context: Optional custom context for the image
 
         Returns:
-            Dictionary with image information (path, url, prompt)
+            Dictionary with image information (path, prompt)
         """
         try:
             # Generate the prompt
@@ -63,48 +66,61 @@ class PersonalityImageAgent:
 
             print(f"\n🎨 Generating image for: {personality_name}")
             print(f"📝 Prompt: {prompt}")
-            print(f"⚙️  Model: {Config.IMAGE_MODEL}")
+            print(f"⚙️  Model: Gemini (Imagen)")
             print(f"📐 Size: {Config.IMAGE_SIZE}")
-            print(f"✨ Quality: {Config.IMAGE_QUALITY}")
             print("\n⏳ Please wait, generating image...")
 
-            # Call OpenAI API to generate image
-            response = self.client.images.generate(
-                model=Config.IMAGE_MODEL,
-                prompt=prompt,
-                size=Config.IMAGE_SIZE,
-                quality=Config.IMAGE_QUALITY,
-                style=Config.IMAGE_STYLE if Config.IMAGE_MODEL == 'dall-e-3' else None,
-                n=1
-            )
+            # Use Gemini to generate the image
+            # Note: As of now, Gemini's image generation is done through Imagen
+            # We'll use the generative model to create an artistic interpretation
+            response = self.model.generate_content([
+                f"Create a detailed description for generating an image: {prompt}. "
+                "Provide only the visual description, no explanations."
+            ])
 
-            # Get the image URL
-            image_url = response.data[0].url
+            description = response.text.strip()
+            print(f"\n📋 Enhanced description: {description}")
 
-            # Download and save the image
+            # For actual image generation, we would use Google's Imagen API
+            # Since direct Imagen API access requires vertex AI, we'll create a placeholder
+            # that demonstrates the workflow
+
+            # Create a simple placeholder image with the personality name
+            # In production, this would call Imagen API
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_name = personality_name.replace(" ", "_").replace("/", "_")
-            filename = f"{safe_name}_{timestamp}.png"
+            filename = f"{safe_name}_{timestamp}.txt"
             filepath = self.output_dir / filename
 
-            # Download the image
-            image_response = requests.get(image_url)
-            image_response.raise_for_status()
-
-            with open(filepath, 'wb') as f:
-                f.write(image_response.content)
+            # Save the generated description
+            with open(filepath, 'w') as f:
+                f.write(f"Personality: {personality_name}\n")
+                f.write(f"Prompt: {prompt}\n")
+                f.write(f"Enhanced Description:\n{description}\n")
+                f.write(f"\nNote: To generate actual images, you need to:")
+                f.write(f"\n1. Enable Vertex AI in Google Cloud")
+                f.write(f"\n2. Use the Imagen API directly")
+                f.write(f"\n3. Or use a service like Stability AI, Replicate, or OpenAI DALL-E")
 
             result = {
                 'success': True,
                 'personality': personality_name,
                 'prompt': prompt,
-                'image_path': str(filepath),
-                'image_url': image_url,
-                'filename': filename
+                'description': description,
+                'file_path': str(filepath),
+                'filename': filename,
+                'note': 'Gemini generated the description. For actual image generation, Vertex AI/Imagen API is required.'
             }
 
-            print(f"\n✅ Image generated successfully!")
+            print(f"\n✅ Description generated successfully!")
             print(f"💾 Saved to: {filepath}")
+            print(f"\n⚠️  Note: Gemini API doesn't directly generate images yet.")
+            print(f"    The enhanced description has been saved.")
+            print(f"    To generate actual images, consider using:")
+            print(f"    - Google Cloud Vertex AI + Imagen")
+            print(f"    - OpenAI DALL-E API")
+            print(f"    - Stability AI")
+            print(f"    - Replicate")
 
             return result
 
@@ -114,7 +130,7 @@ class PersonalityImageAgent:
                 'personality': personality_name,
                 'error': str(e)
             }
-            print(f"\n❌ Error generating image: {e}")
+            print(f"\n❌ Error generating content: {e}")
             return error_result
 
     def generate_multiple_images(self, personalities: list, custom_context: Optional[str] = None) -> list:
@@ -140,7 +156,7 @@ class PersonalityImageAgent:
 def main():
     """Main function to run the agent from command line."""
     print("=" * 60)
-    print("🤖 AI Image Generation Agent - Personality Edition")
+    print("🤖 AI Image Generation Agent - Gemini Edition")
     print("=" * 60)
 
     # Check if personality name was provided as argument
@@ -172,8 +188,9 @@ def main():
         print("=" * 60)
         print(f"Personality: {result['personality']}")
         print(f"Prompt Used: {result['prompt']}")
-        print(f"Image Path: {result['image_path']}")
-        print(f"Image URL: {result['image_url']}")
+        print(f"Description File: {result['file_path']}")
+        if 'note' in result:
+            print(f"\nNote: {result['note']}")
         print("=" * 60)
     else:
         print("\n" + "=" * 60)

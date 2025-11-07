@@ -1,20 +1,30 @@
-# AI Image Generation Agent - Personality Edition
+# AI Image Generation Agent - Gemini Edition
 
-An intelligent agent that generates AI images of public personalities using OpenAI's DALL-E API. Simply provide the name of any public figure, and the agent will create a high-quality AI-generated image.
+An intelligent agent that generates AI image descriptions of public personalities using Google's Gemini API. Simply provide the name of any public figure, and the agent will create a detailed description that can be used for image generation.
+
+## Important Note
+
+**Current Implementation**: This version uses Google's Gemini API to generate detailed image descriptions. The Gemini free API does not directly generate images, but creates enhanced descriptions that can be used with image generation services.
+
+**For Actual Image Generation**, you can:
+1. Use the descriptions with Google Cloud Vertex AI + Imagen
+2. Switch to OpenAI DALL-E API (see OpenAI version)
+3. Use Stability AI or other image generation services
+4. Use services like Replicate or Hugging Face
 
 ## Features
 
-- Generate AI images based on personality names
-- Support for DALL-E 2 and DALL-E 3 models
-- Customizable image parameters (size, quality, style)
-- Automatic image download and storage
+- Generate detailed image descriptions based on personality names
+- Support for custom context and personalization
+- Automatic description storage with timestamps
 - Interactive and command-line modes
-- Custom context support for personalized images
+- Uses Google's Gemini AI for enhanced descriptions
+- Free to use with Gemini API key
 
 ## Prerequisites
 
 - Python 3.8 or higher
-- OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+- Google Gemini API key ([Get one here - FREE](https://aistudio.google.com/app/apikey))
 
 ## Installation
 
@@ -34,10 +44,17 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-4. Edit the `.env` file and add your OpenAI API key:
+4. Edit the `.env` file and add your Gemini API key:
 ```
-OPENAI_API_KEY=your_actual_api_key_here
+GEMINI_API_KEY=your_actual_api_key_here
 ```
+
+## Getting Your FREE Gemini API Key
+
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the key and paste it in your `.env` file
 
 ## Usage
 
@@ -61,6 +78,35 @@ Provide the personality name as a command-line argument:
 python agent.py "Albert Einstein"
 ```
 
+### Example Session
+
+```bash
+$ python agent.py
+
+============================================================
+🤖 AI Image Generation Agent - Gemini Edition
+============================================================
+
+Enter the name of a public personality to generate an image:
+> Marie Curie
+
+Optional: Add custom context (e.g., 'wearing a suit', 'smiling', etc.)
+Press Enter to skip:
+> in a laboratory
+
+🎨 Generating image for: Marie Curie
+📝 Prompt: A professional portrait of Marie Curie, in a laboratory
+⚙️  Model: Gemini (Imagen)
+📐 Size: 1024x1024
+
+⏳ Please wait, generating image...
+
+📋 Enhanced description: A portrait of Marie Curie in her laboratory...
+
+✅ Description generated successfully!
+💾 Saved to: generated_images/Marie_Curie_20240315_143022.txt
+```
+
 ### Python API
 
 Use the agent programmatically in your Python code:
@@ -71,16 +117,19 @@ from agent import PersonalityImageAgent
 # Create an agent instance
 agent = PersonalityImageAgent()
 
-# Generate a single image
+# Generate a description
 result = agent.generate_image("Leonardo da Vinci")
+
+print(result['description'])
+print(f"Saved to: {result['file_path']}")
 
 # Generate with custom context
 result = agent.generate_image(
-    "Marie Curie",
-    custom_context="in a laboratory, wearing a white coat"
+    "Frida Kahlo",
+    custom_context="with flowers in hair, colorful background"
 )
 
-# Generate multiple images
+# Generate multiple descriptions
 personalities = ["Isaac Newton", "Ada Lovelace", "Stephen Hawking"]
 results = agent.generate_multiple_images(personalities)
 ```
@@ -91,62 +140,27 @@ Configure the agent by editing your `.env` file:
 
 | Variable | Description | Default | Options |
 |----------|-------------|---------|---------|
-| `OPENAI_API_KEY` | Your OpenAI API key | Required | - |
-| `IMAGE_MODEL` | DALL-E model to use | `dall-e-3` | `dall-e-2`, `dall-e-3` |
-| `IMAGE_SIZE` | Size of generated images | `1024x1024` | See below |
-| `IMAGE_QUALITY` | Image quality (DALL-E 3) | `standard` | `standard`, `hd` |
-| `IMAGE_STYLE` | Image style (DALL-E 3) | `vivid` | `vivid`, `natural` |
+| `GEMINI_API_KEY` | Your Google Gemini API key | Required | Get from AI Studio |
+| `IMAGE_MODEL` | Model identifier | `imagen-3.0-generate-001` | Any Gemini model |
+| `IMAGE_SIZE` | Target image size | `1024x1024` | `256x256`, `512x512`, `1024x1024` |
+| `NUM_IMAGES` | Number of variations | `1` | Any integer |
 | `OUTPUT_DIR` | Output directory | `generated_images` | Any valid path |
-
-### Image Size Options
-
-**DALL-E 3:**
-- `1024x1024` (square)
-- `1792x1024` (landscape)
-- `1024x1792` (portrait)
-
-**DALL-E 2:**
-- `256x256`
-- `512x512`
-- `1024x1024`
-
-## Examples
-
-### Basic Usage
-
-```bash
-# Generate an image of a historical figure
-python agent.py "Vincent van Gogh"
-
-# Generate an image of a scientist
-python agent.py "Neil deGrasse Tyson"
-
-# Generate an image of a leader
-python agent.py "Nelson Mandela"
-```
-
-### With Custom Context
-
-When prompted for custom context, you can add specific details:
-
-```
-Enter the name of a public personality to generate an image:
-> Frida Kahlo
-
-Optional: Add custom context (e.g., 'wearing a suit', 'smiling', etc.)
-Press Enter to skip:
-> with flowers in hair, colorful background
-```
 
 ## Output
 
-Generated images are saved in the `generated_images/` directory (or your configured `OUTPUT_DIR`) with the following naming convention:
+Generated descriptions are saved in the `generated_images/` directory with the following naming convention:
 
 ```
-<personality_name>_<timestamp>.png
+<personality_name>_<timestamp>.txt
 ```
 
-Example: `Albert_Einstein_20240315_143022.png`
+Example: `Albert_Einstein_20240315_143022.txt`
+
+Each file contains:
+- Personality name
+- Original prompt
+- Enhanced description generated by Gemini
+- Notes about actual image generation options
 
 ## Code Structure
 
@@ -158,7 +172,7 @@ AI-generated-images/
 ├── .env.example          # Example environment variables
 ├── .gitignore           # Git ignore rules
 ├── README.md            # This file
-└── generated_images/    # Generated images (created automatically)
+└── generated_images/    # Generated descriptions (created automatically)
 ```
 
 ## API Response
@@ -169,54 +183,75 @@ The agent returns a dictionary with the following structure:
 {
     'success': True,
     'personality': 'Albert Einstein',
-    'prompt': 'A professional portrait of Albert Einstein, realistic style...',
-    'image_path': 'generated_images/Albert_Einstein_20240315_143022.png',
-    'image_url': 'https://...',  # Original DALL-E URL
-    'filename': 'Albert_Einstein_20240315_143022.png'
+    'prompt': 'A professional portrait of Albert Einstein...',
+    'description': 'Detailed visual description...',
+    'file_path': 'generated_images/Albert_Einstein_20240315_143022.txt',
+    'filename': 'Albert_Einstein_20240315_143022.txt',
+    'note': 'Instructions for actual image generation'
 }
 ```
 
-## Error Handling
+## Converting Descriptions to Images
 
-If an error occurs, the response will include:
+### Option 1: Google Cloud Vertex AI + Imagen (Recommended for Google)
 
 ```python
-{
-    'success': False,
-    'personality': 'Name',
-    'error': 'Error message'
-}
+# Requires Google Cloud project and Vertex AI setup
+from google.cloud import aiplatform
+# ... use the description with Imagen API
+```
+
+### Option 2: OpenAI DALL-E
+
+Use the generated descriptions with DALL-E:
+
+```python
+from openai import OpenAI
+client = OpenAI(api_key="your-key")
+
+# Read the description from the generated file
+with open('generated_images/Marie_Curie_20240315_143022.txt') as f:
+    description = f.read()
+
+# Generate image
+response = client.images.generate(
+    model="dall-e-3",
+    prompt=description,
+    size="1024x1024"
+)
+```
+
+### Option 3: Stability AI
+
+```python
+import stability_sdk
+# Use the description with Stable Diffusion
 ```
 
 ## Costs
 
-Image generation uses OpenAI's DALL-E API, which incurs costs:
+**FREE**: Gemini API has a generous free tier for generating descriptions. Actual image generation costs depend on the service you use:
 
-- **DALL-E 3**: ~$0.04 per image (standard), ~$0.08 per image (HD)
-- **DALL-E 2**: ~$0.02 per image (1024x1024)
-
-Check [OpenAI's pricing page](https://openai.com/pricing) for current rates.
+- **Google Imagen (Vertex AI)**: Pay-per-use pricing
+- **OpenAI DALL-E**: ~$0.04 per image
+- **Stability AI**: Various pricing tiers
 
 ## Limitations
 
-- Requires an active OpenAI API key with sufficient credits
-- Generated images are AI interpretations, not actual photos
-- Some personalities may be protected by OpenAI's content policy
-- Rate limits apply based on your OpenAI account tier
+- Requires a Gemini API key (free to get)
+- Generates descriptions, not actual images (without Vertex AI)
+- For actual image generation, need to integrate with image generation service
+- Rate limits apply based on Gemini API tier (generous free tier)
 
 ## Troubleshooting
 
-### "OPENAI_API_KEY is not set"
+### "GEMINI_API_KEY is not set"
 
 Make sure you've created a `.env` file from `.env.example` and added your API key.
 
 ### "Invalid API key"
 
-Verify your API key is correct at https://platform.openai.com/api-keys
-
-### "Rate limit exceeded"
-
-You've hit OpenAI's rate limit. Wait a moment and try again, or upgrade your API plan.
+Verify your API key is correct at https://aistudio.google.com/app/apikey
 
 ### Module not found errors
 
@@ -224,6 +259,33 @@ Install all dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
+### Want actual images?
+
+You have several options:
+1. Set up Google Cloud + Vertex AI for Imagen access
+2. Use the OpenAI version of this agent (uses DALL-E)
+3. Copy the generated descriptions and use them with any image generation service
+
+## Why This Approach?
+
+**Gemini's free API** is excellent for:
+- Creating detailed, creative image descriptions
+- Understanding and enhancing user prompts
+- Generating multiple variations
+- Cost-effective experimentation
+
+**For actual image generation**, combining Gemini descriptions with specialized image APIs provides the best results.
+
+## Upgrading to Full Image Generation
+
+Want to generate actual images? You can:
+
+1. **Add Vertex AI integration** (for Imagen)
+2. **Switch to the OpenAI version** (I can help you set this up)
+3. **Integrate with Stability AI or Replicate**
+
+Let me know if you'd like help setting up any of these options!
 
 ## Contributing
 
@@ -235,8 +297,8 @@ This project is open source and available under the MIT License.
 
 ## Acknowledgments
 
-- Powered by [OpenAI's DALL-E API](https://platform.openai.com/docs/guides/images)
-- Built with Python and the OpenAI Python library
+- Powered by [Google's Gemini API](https://ai.google.dev/)
+- Built with Python and the Google Generative AI library
 
 ## Support
 
