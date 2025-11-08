@@ -162,6 +162,7 @@ def main():
     # Check if personality name was provided as argument
     if len(sys.argv) > 1:
         personality_name = " ".join(sys.argv[1:])
+        custom_context = None  # No custom context in CLI mode
     else:
         # Interactive mode
         print("\nEnter the name of a public personality to generate an image:")
@@ -171,11 +172,11 @@ def main():
             print("❌ No personality name provided. Exiting.")
             sys.exit(1)
 
-    # Optional: Ask for custom context
-    print("\nOptional: Add custom context (e.g., 'wearing a suit', 'smiling', etc.)")
-    print("Press Enter to skip:")
-    custom_context = input("> ").strip()
-    custom_context = custom_context if custom_context else None
+        # Optional: Ask for custom context
+        print("\nOptional: Add custom context (e.g., 'wearing a suit', 'smiling', etc.)")
+        print("Press Enter to skip:")
+        custom_context = input("> ").strip()
+        custom_context = custom_context if custom_context else None
 
     # Create agent and generate image
     agent = PersonalityImageAgent()
