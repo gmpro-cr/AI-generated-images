@@ -41,6 +41,12 @@ generated_images/
 *.jpg
 *.jpeg
 
+# Generated Videos
+generated_videos/
+*.mp4
+*.avi
+*.mov
+
 # Logs
 *.log
 
